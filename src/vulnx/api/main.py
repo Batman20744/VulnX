@@ -8,11 +8,14 @@ from vulnx.core.database import (
     check_database_connection,
     init_db,
 )
+
 from vulnx.api.assets import router as assets_router
+from vulnx.api.cves import router as cves_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize database tables when application starts.
     init_db()
     yield
 
@@ -25,9 +28,16 @@ app = FastAPI(
 )
 
 
-# Register Asset Inventory API
+# Asset Inventory API
 app.include_router(
     assets_router,
+    prefix=settings.API_PREFIX,
+)
+
+
+# CVE Intelligence API
+app.include_router(
+    cves_router,
     prefix=settings.API_PREFIX,
 )
 

@@ -10,8 +10,10 @@ class Settings(BaseSettings):
     )
 
     API_PREFIX: str = "/api/v1"
-
     DATABASE_URL: str = "sqlite:///./data/vulnx.db"
+
+    # NVD API configuration
+    NVD_API_KEY: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
