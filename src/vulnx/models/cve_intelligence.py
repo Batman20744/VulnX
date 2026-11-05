@@ -63,6 +63,12 @@ class CVEIntelligence(Base):
         nullable=True
     )
 
+    # Original NVD CPE configuration tree stored as JSON.
+    configurations: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
+
     source: Mapped[str] = mapped_column(
         String(30),
         default="NVD",

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from vulnx.intelligence.nvd_client import NVDClient
 from vulnx.intelligence.normalizer import normalize_cve
+from vulnx.intelligence.cpe_parser import parse_cve_configurations
 from vulnx.models.cve_intelligence import CVEIntelligence
 
 
@@ -13,11 +14,13 @@ async def fetch_and_store_cve(
     cve_id: str,
     db: Session,
 ) -> CVEIntelligence:
-    """Fetch a CVE from NVD and save or update it."""
-
     client = NVDClient()
+
     raw_response = await client.get_cve(cve_id)
+
     data = normalize_cve(raw_response)
+
+    configurations = parse_cve_configurations(raw_response)
 
     record = (
         db.query(CVEIntelligence)
@@ -36,12 +39,17 @@ async def fetch_and_store_cve(
     record.published = data["published"]
     record.last_modified = data["last_modified"]
     record.references = json.dumps(data["references"])
+
+    # Save the original NVD CPE configuration tree.
+    record.configurations = json.dumps(configurations)
+
     record.source = data["source"]
     record.retrieved_at = datetime.now(timezone.utc)
 
     try:
         db.commit()
         db.refresh(record)
+
     except Exception:
         db.rollback()
         raise

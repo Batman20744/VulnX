@@ -1,3 +1,4 @@
+
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -94,9 +95,10 @@ class VulnerabilityFinding(Base):
 
     __table_args__ = (
         Index(
-            "ix_finding_cve_asset",
-            "cve_id",
+            "ix_finding_scan_asset_cve",
+            "scan_id",
             "asset_id",
+            "cve_id",
             unique=True
         ),
     )

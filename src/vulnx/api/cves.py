@@ -1,12 +1,17 @@
 
 import asyncio
+import httpx
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from vulnx.core.database import get_db
 from vulnx.models.cve_intelligence import CVEIntelligence
+
 from vulnx.services.cve_service import fetch_and_store_cve
+from vulnx.services.epss_service import refresh_finding_epss
+from vulnx.services.kev_service import refresh_finding_kev
+
 from vulnx.intelligence.nvd_client import NVDClientError
 
 
@@ -16,6 +21,7 @@ router = APIRouter(
 )
 
 
+# GET all stored CVE records
 @router.get("/")
 def get_all_cves(
     skip: int = 0,
@@ -55,6 +61,63 @@ def get_all_cves(
     ]
 
 
+# POST refresh EPSS intelligence
+@router.post("/refresh-epss")
+def refresh_epss(
+    db: Session = Depends(get_db),
+):
+    """Refresh EPSS scores from FIRST."""
+
+    try:
+        result = refresh_finding_epss(db)
+
+        return {
+            "message": "EPSS intelligence refreshed successfully.",
+            **result,
+        }
+
+    except httpx.TimeoutException as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="EPSS API request timed out.",
+        ) from exc
+
+    except (httpx.HTTPError, ValueError) as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to retrieve EPSS intelligence.",
+        ) from exc
+
+
+# POST refresh CISA KEV intelligence
+@router.post("/refresh-kev")
+def refresh_kev(
+    db: Session = Depends(get_db),
+):
+    """Refresh KEV status using the official CISA catalog."""
+
+    try:
+        result = refresh_finding_kev(db)
+
+        return {
+            "message": "CISA KEV intelligence refreshed successfully.",
+            **result,
+        }
+
+    except httpx.TimeoutException as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="CISA KEV catalog request timed out.",
+        ) from exc
+
+    except (httpx.HTTPError, ValueError) as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to retrieve CISA KEV intelligence.",
+        ) from exc
+
+
+# GET one stored CVE record
 @router.get("/{cve_id}")
 def get_cve(
     cve_id: str,
@@ -64,7 +127,9 @@ def get_cve(
 
     record = (
         db.query(CVEIntelligence)
-        .filter(CVEIntelligence.cve_id == cve_id.upper())
+        .filter(
+            CVEIntelligence.cve_id == cve_id.upper()
+        )
         .first()
     )
 
@@ -88,6 +153,7 @@ def get_cve(
     }
 
 
+# POST refresh one CVE from NVD
 @router.post("/{cve_id}/refresh")
 async def refresh_cve(
     cve_id: str,
