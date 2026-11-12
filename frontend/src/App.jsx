@@ -14,6 +14,11 @@ import {
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
+import Assets from "./pages/Assets";
+import Scans from "./pages/Scans";
+import Findings from "./pages/Findings";
+import CVEIntelligence from "./pages/CVEIntelligence";
+import Reports from "./pages/Reports";
 
 import "./styles/theme.css";
 import "./App.css";
@@ -234,11 +239,21 @@ function App() {
       <main className="main-area">
         <Navbar onNavigate={setActivePage} />
 
-        {activePage === "Dashboard" ? (
-          <Dashboard />
-        ) : activePage === "Settings" ? (
-          <SettingsPage />
-        ) : (
+    {activePage === "Dashboard" ? (
+  <Dashboard />
+) : activePage === "Assets" ? (
+  <Assets />
+) : activePage === "Vulnerability Scans" ? (
+  <Scans />
+) : activePage === "Findings" ? (
+  <Findings />
+) : activePage === "CVE Intelligence" ? (
+  <CVEIntelligence />
+  ) : activePage === "Reports" ? (
+  <Reports />
+) : activePage === "Settings" ? (
+  <SettingsPage />
+) : (
           <section className="dashboard-content">
             <div className="dashboard-heading">
               <div>

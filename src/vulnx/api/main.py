@@ -14,7 +14,7 @@ from vulnx.api.assets import router as assets_router
 from vulnx.api.cves import router as cves_router
 from vulnx.api.scans import router as scans_router
 from vulnx.api.findings import router as findings_router
-
+from vulnx.api.reports import router as reports_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -63,6 +63,10 @@ app.include_router(
 
 app.include_router(
     findings_router,
+    prefix=settings.API_PREFIX,
+)
+app.include_router(
+    reports_router,
     prefix=settings.API_PREFIX,
 )
 
